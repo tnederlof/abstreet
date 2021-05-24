@@ -217,9 +217,16 @@ impl Queue {
             None => dists.len(),
         };
 
-        // Nope, there's not actually room at the front right now.
-        if self.laggy_head.is_some() && idx == 0 {
-            return None;
+        if idx == 0 {
+            if let Some(c) = self.laggy_head {
+                // We don't know exactly where the laggy head is. So assume the worst case; that
+                // they've just barely started the turn, and we have to use the same
+                // too-close-to-leader math.
+                if self.geom_len - cars[&c].vehicle.length - FOLLOWING_DISTANCE < start_dist {
+                    error!("laggy head case");
+                    return None;
+                }
+            }
         }
 
         // Are we too close to the leader?
@@ -227,10 +234,12 @@ impl Queue {
             && dists[idx - 1].1 - cars[&dists[idx - 1].0].vehicle.length - FOLLOWING_DISTANCE
                 < start_dist
         {
+            error!("close to leader");
             return None;
         }
         // Or the follower?
         if idx != dists.len() && start_dist - vehicle_len - FOLLOWING_DISTANCE < dists[idx].1 {
+            error!("close to follower");
             return None;
         }
 

@@ -3,7 +3,7 @@ use std::collections::{BTreeSet, VecDeque};
 use serde::{Deserialize, Serialize};
 
 use geom::{Distance, Duration, PolyLine, Time, EPSILON_DIST};
-use map_model::{Direction, Map, Traversable};
+use map_model::{Direction, LaneID, Map, Traversable};
 
 use crate::{
     CarID, CarStatus, DistanceInterval, DrawCarInput, ParkingSpot, PersonID, Router, TimeInterval,
@@ -268,6 +268,7 @@ pub(crate) enum CarState {
     Crossing(TimeInterval, DistanceInterval),
     Queued {
         blocked_since: Time,
+        change_lanes: Option<LaneID>,
     },
     WaitingToAdvance {
         blocked_since: Time,
@@ -292,9 +293,8 @@ impl CarState {
 
     pub fn time_spent_waiting(&self, now: Time) -> Duration {
         match self {
-            CarState::Queued { blocked_since } | CarState::WaitingToAdvance { blocked_since } => {
-                now - *blocked_since
-            }
+            CarState::Queued { blocked_since, .. }
+            | CarState::WaitingToAdvance { blocked_since } => now - *blocked_since,
             _ => Duration::ZERO,
         }
     }
