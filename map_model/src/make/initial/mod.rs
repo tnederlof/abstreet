@@ -138,21 +138,35 @@ impl InitialMap {
                 // pieces. We could get fancier and try to convex/concave hull or glue them
                 // together later.
                 i.polygon = Polygon::union_all(raw_i.merged_pieces.clone());
-                // Trim all of the roads as if we're keeping the unoriginal unmerged intersections
-                for (r, endpt) in &raw_i.trim_roads_for_merging {
-                    // Might not exist because it's the short road we nuked
-                    if let Some(road) = m.roads.get_mut(r) {
+
+                /*if i.id.0 == 2941419917 {
+                    for (r, endpt) in &raw_i.trim_roads_for_merging {
+                        error!("hmmm for the uni/mill intersection, we've got endpts for {}", r);
+                    }
+                }*/
+
+                for r in raw.roads_per_intersection(i.id) {
+                    if let Some(endpt) = raw_i
+                        .trim_roads_for_merging
+                        .get(&(r.osm_way_id, r.i1 == i.id))
+                    {
+                        let road = m.roads.get_mut(&r).unwrap();
                         if road.src_i == i.id {
+                            if r.osm_way_id.0 == 5607328 {
+                                error!("hmmm trimming for src_i, due to {}", i.id);
+                            }
                             road.trimmed_center_pts = road
                                 .trimmed_center_pts
                                 .get_slice_starting_at(*endpt)
                                 .unwrap();
                         } else {
+                            assert_eq!(road.dst_i, i.id);
+                            if r.osm_way_id.0 == 5607328 {
+                                error!("hmmm trimming for dst_i, due to {}", i.id);
+                            }
                             road.trimmed_center_pts =
                                 road.trimmed_center_pts.get_slice_ending_at(*endpt).unwrap();
                         }
-                    } else {
-                        error!("hmm for {}, not trimming {} at all", i.id, r);
                     }
                 }
             }
