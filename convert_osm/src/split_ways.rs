@@ -1,4 +1,4 @@
-use std::collections::{hash_map::Entry, HashMap};
+use std::collections::{hash_map::Entry, BTreeMap, HashMap};
 
 use abstutil::{Counter, Timer};
 use geom::{Distance, HashablePt2D, PolyLine, Pt2D};
@@ -67,6 +67,8 @@ pub fn split_up_roads(
                 },
                 // Filled out later
                 elevation: Distance::ZERO,
+                merged_pieces: Vec::new(),
+                trim_roads_for_merging: BTreeMap::new(),
             },
         );
     }
@@ -80,6 +82,8 @@ pub fn split_up_roads(
                 intersection_type: IntersectionType::StopSign,
                 // Filled out later
                 elevation: Distance::ZERO,
+                merged_pieces: Vec::new(),
+                trim_roads_for_merging: BTreeMap::new(),
             },
         );
     }

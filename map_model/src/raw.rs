@@ -171,6 +171,15 @@ impl RawMap {
         &self,
         id: osm::NodeID,
     ) -> (Polygon, Vec<Polygon>, Vec<(String, Polygon)>) {
+        // TODO Weird place to put this?
+        if !self.intersections[&id].merged_pieces.is_empty() {
+            return (
+                Polygon::union_all(self.intersections[&id].merged_pieces.clone()),
+                Vec::new(),
+                Vec::new(),
+            );
+        }
+
         use crate::make::initial;
 
         let intersection_roads: BTreeSet<OriginalRoad> =
@@ -332,6 +341,47 @@ impl RawMap {
         let mut connected_to_i1 = self.roads_per_intersection(i1);
         connected_to_i1.retain(|x| *x != short);
 
+        // These're OLD ids
+        let mut trim_roads_for_merging = BTreeMap::new();
+        // Retain some geometry...
+        {
+            let (i1_poly, _, _) = self.preview_intersection(i1);
+            let (i2_poly, _, _) = self.preview_intersection(i2);
+            // The only road that should get filled out here twice is the one we're deleting, so
+            // that's fine...
+            for r in self.roads_per_intersection(i1) {
+                if let Some(pl) = self.trimmed_road_geometry(r) {
+                    trim_roads_for_merging.insert(
+                        r,
+                        if r.i1 == i1 {
+                            pl.first_pt()
+                        } else {
+                            pl.last_pt()
+                        },
+                    );
+                }
+            }
+            // TODO derp, the id is gonnna change.
+            for r in self.roads_per_intersection(i2) {
+                if let Some(pl) = self.trimmed_road_geometry(r) {
+                    trim_roads_for_merging.insert(
+                        r,
+                        if r.i1 == i2 {
+                            pl.first_pt()
+                        } else {
+                            pl.last_pt()
+                        },
+                    );
+                }
+            }
+
+            let i1_mut = self.intersections.get_mut(&i1).unwrap();
+            i1_mut.merged_pieces.push(i1_poly);
+            i1_mut.merged_pieces.push(i2_poly);
+            // TODO Wait, just the one road we're nuking
+            //i1_mut.trim_roads_for_merging.extend(trim_roads_for_merging);
+        }
+
         self.roads.remove(&short).unwrap();
 
         // Arbitrarily keep i1 and destroy i2. If the intersection types differ, upgrade the
@@ -363,7 +413,7 @@ impl RawMap {
             OnlyNormalRoads,
         }
         let modify_geom = ModifyGeom::AddOnePoint;
-        let modify_which = ModifyWhichRoads::All;
+        let modify_which = ModifyWhichRoads::None;
 
         // Fix up all roads connected to i2. Delete them and create a new copy; the ID changes,
         // since one intersection changes.
@@ -473,6 +523,13 @@ impl RawMap {
             road.turn_restrictions.extend(add);
         }
 
+        // Remember trim points!
+        let i1_mut = self.intersections.get_mut(&i1).unwrap();
+        for (r, endpt) in trim_roads_for_merging {
+            let new_r = old_to_new.get(&r).cloned().unwrap_or(r);
+            i1_mut.trim_roads_for_merging.insert(new_r, endpt);
+        }
+
         Ok((i1, i2, deleted, created))
     }
 }
@@ -555,6 +612,9 @@ pub struct RawIntersection {
     pub point: Pt2D,
     pub intersection_type: IntersectionType,
     pub elevation: Distance,
+
+    pub merged_pieces: Vec<Polygon>,
+    pub trim_roads_for_merging: BTreeMap<OriginalRoad, Pt2D>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

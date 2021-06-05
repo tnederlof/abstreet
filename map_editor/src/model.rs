@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::io::Write;
 
 use abstio::{CityName, MapName};
@@ -192,6 +192,8 @@ impl Model {
                 point,
                 intersection_type: IntersectionType::StopSign,
                 elevation: Distance::ZERO,
+                merged_pieces: Vec::new(),
+                trim_roads_for_merging: BTreeMap::new(),
             },
         );
         self.intersection_added(ctx, id);
