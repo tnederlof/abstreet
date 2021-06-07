@@ -170,12 +170,16 @@ impl RawMap {
     pub fn preview_intersection(
         &self,
         id: osm::NodeID,
-    ) -> (Polygon, Vec<Polygon>, Vec<(String, Polygon)>) {
+    ) -> (
+        Polygon,
+        BTreeMap<OriginalRoad, Polygon>,
+        Vec<(String, Polygon)>,
+    ) {
         // TODO Weird place to put this?
         if !self.intersections[&id].merged_pieces.is_empty() {
             return (
                 Polygon::union_all(self.intersections[&id].merged_pieces.clone()),
-                Vec::new(),
+                BTreeMap::new(),
                 Vec::new(),
             );
         }
@@ -199,8 +203,13 @@ impl RawMap {
         (
             poly,
             roads
-                .values()
-                .map(|r| r.trimmed_center_pts.make_polygons(2.0 * r.half_width))
+                .iter()
+                .map(|(r_id, r)| {
+                    (
+                        *r_id,
+                        r.trimmed_center_pts.make_polygons(2.0 * r.half_width),
+                    )
+                })
                 .collect(),
             debug,
         )
@@ -369,12 +378,16 @@ impl RawMap {
                 }
             }
 
-            let (i1_poly, _, _) = self.preview_intersection(i1);
+            let (i1_poly, mut i1_road_polys, _) = self.preview_intersection(i1);
             let (i2_poly, _, _) = self.preview_intersection(i2);
             let i1_mut = self.intersections.get_mut(&i1).unwrap();
             i1_mut.merged_pieces.push(i1_poly);
             i1_mut.merged_pieces.push(i2_poly);
-            // TODO Wait, just the one road we're nuking
+            // Also include the thick road we're nuking
+            i1_mut
+                .merged_pieces
+                .push(i1_road_polys.remove(&short).unwrap());
+
             i1_mut.trim_roads_for_merging.extend(trim_roads_for_merging);
         }
 

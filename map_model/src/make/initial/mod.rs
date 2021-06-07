@@ -138,12 +138,7 @@ impl InitialMap {
                 // pieces. We could get fancier and try to convex/concave hull or glue them
                 // together later.
                 i.polygon = Polygon::union_all(raw_i.merged_pieces.clone());
-
-                /*if i.id.0 == 2941419917 {
-                    for (r, endpt) in &raw_i.trim_roads_for_merging {
-                        error!("hmmm for the uni/mill intersection, we've got endpts for {}", r);
-                    }
-                }*/
+                //i.polygon = Polygon::convex_hull(raw_i.merged_pieces.clone());
 
                 for r in raw.roads_per_intersection(i.id) {
                     if let Some(endpt) = raw_i
