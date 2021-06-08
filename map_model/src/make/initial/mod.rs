@@ -145,22 +145,17 @@ impl InitialMap {
                         .trim_roads_for_merging
                         .get(&(r.osm_way_id, r.i1 == i.id))
                     {
-                        let road = m.roads.get_mut(&r).unwrap();
-                        if road.src_i == i.id {
-                            if r.osm_way_id.0 == 5607328 {
-                                error!("hmmm trimming for src_i, due to {}", i.id);
+                        if let Some(road) = m.roads.get_mut(&r) {
+                            if road.src_i == i.id {
+                                road.trimmed_center_pts = road
+                                    .trimmed_center_pts
+                                    .get_slice_starting_at(*endpt)
+                                    .unwrap();
+                            } else {
+                                assert_eq!(road.dst_i, i.id);
+                                road.trimmed_center_pts =
+                                    road.trimmed_center_pts.get_slice_ending_at(*endpt).unwrap();
                             }
-                            road.trimmed_center_pts = road
-                                .trimmed_center_pts
-                                .get_slice_starting_at(*endpt)
-                                .unwrap();
-                        } else {
-                            assert_eq!(road.dst_i, i.id);
-                            if r.osm_way_id.0 == 5607328 {
-                                error!("hmmm trimming for dst_i, due to {}", i.id);
-                            }
-                            road.trimmed_center_pts =
-                                road.trimmed_center_pts.get_slice_ending_at(*endpt).unwrap();
                         }
                     }
                 }
