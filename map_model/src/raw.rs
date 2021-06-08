@@ -386,11 +386,10 @@ impl RawMap {
             let i1_mut = self.intersections.get_mut(&i1).unwrap();
             i1_mut.merged_pieces.push(i1_poly);
             i1_mut.merged_pieces.push(i2_poly);
-            // Also include the thick road we're nuking
-            i1_mut
-                .merged_pieces
-                .push(i1_road_polys.remove(&short).unwrap());
-
+            // Also include the thick road we're nuking... if possible.
+            if let Some(poly) = i1_road_polys.remove(&short) {
+                i1_mut.merged_pieces.push(poly);
+            }
             i1_mut.trim_roads_for_merging.extend(trim_roads_for_merging);
         }
 
