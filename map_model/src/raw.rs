@@ -355,26 +355,29 @@ impl RawMap {
             let mut trim_roads_for_merging = BTreeMap::new();
             // The only road that should get filled out here twice is the one we're deleting, so
             // that's fine...
-            for r in self.roads_per_intersection(i1) {
-                if let Some(pl) = self.trimmed_road_geometry(r) {
-                    if r.i1 == i1 {
-                        trim_roads_for_merging.insert((r.osm_way_id, true), pl.first_pt());
-                    } else {
-                        trim_roads_for_merging.insert((r.osm_way_id, false), pl.last_pt());
+            for i in vec![i1, i2] {
+                for r in self.roads_per_intersection(i) {
+                    // If we keep this in there, it might accidentally overwrite the
+                    // trim_roads_for_merging key for a surviving road!
+                    if r == short {
+                        continue;
                     }
-                } else {
-                    error!("no trimmed_road_geometry for {}", r);
-                }
-            }
-            for r in self.roads_per_intersection(i2) {
-                if let Some(pl) = self.trimmed_road_geometry(r) {
-                    if r.i1 == i2 {
-                        trim_roads_for_merging.insert((r.osm_way_id, true), pl.first_pt());
+
+                    if let Some(pl) = self.trimmed_road_geometry(r) {
+                        if r.i1 == i {
+                            if trim_roads_for_merging.contains_key(&(r.osm_way_id, true)) {
+                                error!("ahhhh dupe for {}", r);
+                            }
+                            trim_roads_for_merging.insert((r.osm_way_id, true), pl.first_pt());
+                        } else {
+                            if trim_roads_for_merging.contains_key(&(r.osm_way_id, false)) {
+                                error!("ahhhh dupe for {}", r);
+                            }
+                            trim_roads_for_merging.insert((r.osm_way_id, false), pl.last_pt());
+                        }
                     } else {
-                        trim_roads_for_merging.insert((r.osm_way_id, false), pl.last_pt());
+                        error!("no trimmed_road_geometry for {}", r);
                     }
-                } else {
-                    error!("no trimmed_road_geometry for {}, case 2", r);
                 }
             }
 
