@@ -175,15 +175,6 @@ impl RawMap {
         BTreeMap<OriginalRoad, Polygon>,
         Vec<(String, Polygon)>,
     ) {
-        // TODO Weird place to put this?
-        if !self.intersections[&id].merged_pieces.is_empty() {
-            return (
-                Polygon::union_all(self.intersections[&id].merged_pieces.clone()),
-                BTreeMap::new(),
-                Vec::new(),
-            );
-        }
-
         use crate::make::initial;
 
         let intersection_roads: BTreeSet<OriginalRoad> =
@@ -353,8 +344,6 @@ impl RawMap {
         // Retain some geometry...
         {
             let mut trim_roads_for_merging = BTreeMap::new();
-            // The only road that should get filled out here twice is the one we're deleting, so
-            // that's fine...
             for i in vec![i1, i2] {
                 for r in self.roads_per_intersection(i) {
                     // If we keep this in there, it might accidentally overwrite the
@@ -423,6 +412,7 @@ impl RawMap {
             ArbitrarilyOne,
             OnlyNormalRoads,
         }
+        // TODO Totally just remove all of this code
         let modify_geom = ModifyGeom::AddOnePoint;
         let modify_which = ModifyWhichRoads::None;
 
