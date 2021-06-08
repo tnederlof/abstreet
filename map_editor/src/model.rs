@@ -192,7 +192,6 @@ impl Model {
                 point,
                 intersection_type: IntersectionType::StopSign,
                 elevation: Distance::ZERO,
-                merged_pieces: Vec::new(),
                 trim_roads_for_merging: BTreeMap::new(),
             },
         );

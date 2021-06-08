@@ -67,7 +67,6 @@ pub fn split_up_roads(
                 },
                 // Filled out later
                 elevation: Distance::ZERO,
-                merged_pieces: Vec::new(),
                 trim_roads_for_merging: BTreeMap::new(),
             },
         );
@@ -82,7 +81,6 @@ pub fn split_up_roads(
                 intersection_type: IntersectionType::StopSign,
                 // Filled out later
                 elevation: Distance::ZERO,
-                merged_pieces: Vec::new(),
                 trim_roads_for_merging: BTreeMap::new(),
             },
         );

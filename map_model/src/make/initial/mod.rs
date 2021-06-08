@@ -106,45 +106,12 @@ impl InitialMap {
         timer.start_iter("find each intersection polygon", m.intersections.len());
         for i in m.intersections.values_mut() {
             timer.next();
-            if raw.intersections[&i.id].merged_pieces.is_empty() {
-                match intersection_polygon(
-                    i.id,
-                    i.roads.clone(),
-                    &mut m.roads,
-                    merged_intersections.contains(&i.id),
-                ) {
-                    Ok((poly, _)) => {
-                        i.polygon = poly;
-                    }
-                    Err(err) => {
-                        error!("Can't make intersection geometry for {}: {}", i.id, err);
 
-                        // Don't trim lines back at all
-                        let r = &m.roads[i.roads.iter().next().unwrap()];
-                        let pt = if r.src_i == i.id {
-                            r.trimmed_center_pts.first_pt()
-                        } else {
-                            r.trimmed_center_pts.last_pt()
-                        };
-                        i.polygon = Circle::new(pt, Distance::meters(3.0)).to_polygon();
-
-                        // Also don't attempt to make Movements later!
-                        i.intersection_type = IntersectionType::StopSign;
-                    }
-                }
-            } else {
-                let raw_i = &raw.intersections[&i.id];
-                // Alright this gets interesting. The polygon is just the union of all of the
-                // pieces. We could get fancier and try to convex/concave hull or glue them
-                // together later.
-                i.polygon = Polygon::union_all(raw_i.merged_pieces.clone());
-                //i.polygon = Polygon::convex_hull(raw_i.merged_pieces.clone());
-
+            // First pre-trim roads if it's a consolidated intersection.
+            let trim_roads_for_merging = &raw.intersections[&i.id].trim_roads_for_merging;
+            if !trim_roads_for_merging.is_empty() {
                 for r in raw.roads_per_intersection(i.id) {
-                    if let Some(endpt) = raw_i
-                        .trim_roads_for_merging
-                        .get(&(r.osm_way_id, r.i1 == i.id))
-                    {
+                    if let Some(endpt) = trim_roads_for_merging.get(&(r.osm_way_id, r.i1 == i.id)) {
                         if let Some(road) = m.roads.get_mut(&r) {
                             if road.src_i == i.id {
                                 road.trimmed_center_pts = road
@@ -158,6 +125,32 @@ impl InitialMap {
                             }
                         }
                     }
+                }
+            }
+
+            match intersection_polygon(
+                i.id,
+                i.roads.clone(),
+                &mut m.roads,
+                merged_intersections.contains(&i.id),
+            ) {
+                Ok((poly, _)) => {
+                    i.polygon = poly;
+                }
+                Err(err) => {
+                    error!("Can't make intersection geometry for {}: {}", i.id, err);
+
+                    // Don't trim lines back at all
+                    let r = &m.roads[i.roads.iter().next().unwrap()];
+                    let pt = if r.src_i == i.id {
+                        r.trimmed_center_pts.first_pt()
+                    } else {
+                        r.trimmed_center_pts.last_pt()
+                    };
+                    i.polygon = Circle::new(pt, Distance::meters(3.0)).to_polygon();
+
+                    // Also don't attempt to make Movements later!
+                    i.intersection_type = IntersectionType::StopSign;
                 }
             }
         }

@@ -170,11 +170,7 @@ impl RawMap {
     pub fn preview_intersection(
         &self,
         id: osm::NodeID,
-    ) -> (
-        Polygon,
-        BTreeMap<OriginalRoad, Polygon>,
-        Vec<(String, Polygon)>,
-    ) {
+    ) -> (Polygon, Vec<Polygon>, Vec<(String, Polygon)>) {
         use crate::make::initial;
 
         let intersection_roads: BTreeSet<OriginalRoad> =
@@ -194,13 +190,8 @@ impl RawMap {
         (
             poly,
             roads
-                .iter()
-                .map(|(r_id, r)| {
-                    (
-                        *r_id,
-                        r.trimmed_center_pts.make_polygons(2.0 * r.half_width),
-                    )
-                })
+                .values()
+                .map(|r| r.trimmed_center_pts.make_polygons(2.0 * r.half_width))
                 .collect(),
             debug,
         )
@@ -369,17 +360,11 @@ impl RawMap {
                     }
                 }
             }
-
-            let (i1_poly, mut i1_road_polys, _) = self.preview_intersection(i1);
-            let (i2_poly, _, _) = self.preview_intersection(i2);
-            let i1_mut = self.intersections.get_mut(&i1).unwrap();
-            i1_mut.merged_pieces.push(i1_poly);
-            i1_mut.merged_pieces.push(i2_poly);
-            // Also include the thick road we're nuking... if possible.
-            if let Some(poly) = i1_road_polys.remove(&short) {
-                i1_mut.merged_pieces.push(poly);
-            }
-            i1_mut.trim_roads_for_merging.extend(trim_roads_for_merging);
+            self.intersections
+                .get_mut(&i1)
+                .unwrap()
+                .trim_roads_for_merging
+                .extend(trim_roads_for_merging);
         }
 
         self.roads.remove(&short).unwrap();
@@ -607,7 +592,6 @@ pub struct RawIntersection {
     pub intersection_type: IntersectionType,
     pub elevation: Distance,
 
-    pub merged_pieces: Vec<Polygon>,
     // true if src_i matches this intersection (or the deleted/consolidated one, whatever)
     pub trim_roads_for_merging: BTreeMap<(osm::WayID, bool), Pt2D>,
 }
