@@ -78,8 +78,32 @@ pub fn intersection_polygon(
         for (r, trimmed_center_pts) in rollback {
             roads.get_mut(&r).unwrap().trimmed_center_pts = trimmed_center_pts;
         }
-        generalized_trim_back(roads, intersection_id, &lines)
+        if merged {
+            pretrimmed_geometry(roads, intersection_id, &lines)
+        } else {
+            generalized_trim_back(roads, intersection_id, &lines)
+        }
     }
+}
+
+fn pretrimmed_geometry(
+    roads: &mut BTreeMap<OriginalRoad, Road>,
+    i: osm::NodeID,
+    lines: &[(OriginalRoad, Pt2D, PolyLine, PolyLine)],
+) -> Result<(Polygon, Vec<(String, Polygon)>)> {
+    let mut endpoints: Vec<Pt2D> = Vec::new();
+    for (r, _, _, _) in lines {
+        let r = &roads[r];
+        // Shift those final centers out again to find the main endpoints for the polygon.
+        if r.dst_i == i {
+            endpoints.push(r.trimmed_center_pts.shift_right(r.half_width)?.last_pt());
+            endpoints.push(r.trimmed_center_pts.shift_left(r.half_width)?.last_pt());
+        } else {
+            endpoints.push(r.trimmed_center_pts.shift_left(r.half_width)?.first_pt());
+            endpoints.push(r.trimmed_center_pts.shift_right(r.half_width)?.first_pt());
+        }
+    }
+    Ok((finalize_polygon(i, endpoints), Vec::new()))
 }
 
 fn generalized_trim_back(
@@ -262,6 +286,10 @@ fn generalized_trim_back(
         }
     }
 
+    Ok((finalize_polygon(i, endpoints), debug))
+}
+
+fn finalize_polygon(i: osm::NodeID, endpoints: Vec<Pt2D>) -> Polygon {
     // There are bad polygons caused by weird short roads. As a temporary workaround, detect cases
     // where polygons dramatically double back on themselves and force the polygon to proceed
     // around its center.
@@ -275,13 +303,13 @@ fn generalized_trim_back(
     deduped = Pt2D::approx_dedupe(deduped, Distance::meters(0.1));
     deduped = close_off_polygon(deduped);
     if main_result.len() == deduped.len() {
-        Ok((Ring::must_new(main_result).into_polygon(), debug))
+        Ring::must_new(main_result).into_polygon()
     } else {
         warn!(
             "{}'s polygon has weird repeats, forcibly removing points",
             i
         );
-        Ok((Ring::must_new(deduped).into_polygon(), debug))
+        Ring::must_new(deduped).into_polygon()
     }
 
     // TODO Or always sort points? Helps some cases, hurts other for downtown Seattle.

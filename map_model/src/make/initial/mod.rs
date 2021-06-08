@@ -64,7 +64,6 @@ impl InitialMap {
     pub fn new(
         raw: &RawMap,
         bounds: &Bounds,
-        merged_intersections: &BTreeSet<osm::NodeID>,
         timer: &mut Timer,
     ) -> InitialMap {
         let mut m = InitialMap {
@@ -132,7 +131,7 @@ impl InitialMap {
                 i.id,
                 i.roads.clone(),
                 &mut m.roads,
-                merged_intersections.contains(&i.id),
+                !trim_roads_for_merging.is_empty(),
             ) {
                 Ok((poly, _)) => {
                     i.polygon = poly;
@@ -180,7 +179,7 @@ impl InitialMap {
                 i.id,
                 i.roads.clone(),
                 &mut m.roads,
-                merged_intersections.contains(&i.id),
+                !raw.intersections[&i.id].trim_roads_for_merging.is_empty(),
             )
             .unwrap()
             .0;

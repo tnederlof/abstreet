@@ -601,7 +601,8 @@ fn recalculate_intersection_polygon(
         intersection.orig_id,
         intersection_roads,
         &mut roads,
-        intersection.merged,
+        // or dont untrim GAHH
+        false,//intersection.merged,
     )
     .unwrap()
     .0;
