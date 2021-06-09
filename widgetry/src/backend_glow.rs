@@ -15,7 +15,7 @@ pub use crate::backend_glow_wasm::setup;
 use std::sync::RwLock;
 
 lazy_static::lazy_static! {
-    static ref VERTS_ALIVE: RwLock<usize> = RwLock::new(0);
+    pub static ref VERTS_ALIVE: RwLock<usize> = RwLock::new(0);
 }
 
 pub(crate) unsafe fn build_program(
@@ -191,10 +191,8 @@ impl Drop for Drawable {
         {
             let mut cnt = VERTS_ALIVE.write().unwrap();
             *cnt -= self.num_verts;
-            println!("free up, {}", cnt);
+            //println!("free up, {}", cnt);
         }
-
-
     }
 }
 
@@ -386,7 +384,7 @@ impl PrerenderInnards {
         {
             let mut cnt = VERTS_ALIVE.write().unwrap();
             *cnt += vertices.len();
-            println!("alloc new, {}", cnt);
+            //println!("alloc new, {}", cnt);
         }
 
         Drawable {
