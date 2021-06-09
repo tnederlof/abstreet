@@ -12,6 +12,12 @@ pub use crate::backend_glow_native::setup;
 #[cfg(feature = "wasm-backend")]
 pub use crate::backend_glow_wasm::setup;
 
+use std::sync::RwLock;
+
+lazy_static::lazy_static! {
+    static ref VERTS_ALIVE: RwLock<usize> = RwLock::new(0);
+}
+
 pub(crate) unsafe fn build_program(
     gl: &glow::Context,
     vertex_shader_src: &str,
@@ -171,6 +177,7 @@ pub struct Drawable {
     vert_buffer: Buffer,
     elem_buffer: Buffer,
     num_indices: i32,
+    num_verts: usize,
     gl: Rc<glow::Context>,
 }
 
@@ -180,6 +187,14 @@ impl Drop for Drawable {
         self.elem_buffer.destroy(&self.gl);
         self.vert_buffer.destroy(&self.gl);
         self.vert_array.destroy(&self.gl);
+
+        {
+            let mut cnt = VERTS_ALIVE.write().unwrap();
+            *cnt -= self.num_verts;
+            println!("free up, {}", cnt);
+        }
+
+
     }
 }
 
@@ -368,12 +383,19 @@ impl PrerenderInnards {
             );*/
         }
 
+        {
+            let mut cnt = VERTS_ALIVE.write().unwrap();
+            *cnt += vertices.len();
+            println!("alloc new, {}", cnt);
+        }
+
         Drawable {
             vert_array,
             vert_buffer,
             elem_buffer,
             num_indices,
             gl: self.gl.clone(),
+            num_verts: vertices.len(),
         }
     }
 

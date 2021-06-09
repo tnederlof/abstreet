@@ -20,6 +20,7 @@ glutin = { version = "0.26.0", optional = true }
 htmlescape = "0.3.1"
 image = { version = "0.23.12", default-features = false, features=["png"] }
 instant = "0.1.7"
+lazy_static = "1.4.0"
 log = "0.4.14"
 lru = "0.6.4"
 # Don't upgrade until a crash with opening lane info panels is fixed
