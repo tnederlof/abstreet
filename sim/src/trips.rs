@@ -205,6 +205,8 @@ impl TripManager {
                     start: start_pos,
                     end: goal.goal_pos(constraints, ctx.map).unwrap(),
                     constraints,
+                    alt_starts: Vec::new(),
+                    alt_ends: Vec::new(),
                 };
                 let person = person.id;
 
@@ -244,6 +246,8 @@ impl TripManager {
                         start: start.sidewalk_pos,
                         end: walking_goal.sidewalk_pos,
                         constraints: PathConstraints::Pedestrian,
+                        alt_starts: Vec::new(),
+                        alt_ends: Vec::new(),
                     };
                     match ctx.map.pathfind(req) {
                         Ok(path) => {
@@ -316,6 +320,8 @@ impl TripManager {
                     start: start.sidewalk_pos,
                     end: goal.sidewalk_pos,
                     constraints: PathConstraints::Pedestrian,
+                    alt_starts: Vec::new(),
+                    alt_ends: Vec::new(),
                 };
                 match ctx.map.pathfind(req) {
                     Ok(path) => {
@@ -346,6 +352,8 @@ impl TripManager {
                         start: SidewalkSpot::building(start, ctx.map).sidewalk_pos,
                         end: walk_to.sidewalk_pos,
                         constraints: PathConstraints::Pedestrian,
+                        alt_starts: Vec::new(),
+                        alt_ends: Vec::new(),
                     };
                     match ctx.map.pathfind(req) {
                         Ok(path) => {
@@ -424,6 +432,8 @@ impl TripManager {
                     start: start.sidewalk_pos,
                     end: walk_to.sidewalk_pos,
                     constraints: PathConstraints::Pedestrian,
+                    alt_starts: Vec::new(),
+                    alt_ends: Vec::new(),
                 };
                 match ctx.map.pathfind(req) {
                     Ok(path) => {
@@ -560,6 +570,8 @@ impl TripManager {
             start,
             end,
             constraints: PathConstraints::Car,
+            alt_starts: Vec::new(),
+            alt_ends: Vec::new(),
         };
 
         let person = trip.person;
@@ -627,6 +639,8 @@ impl TripManager {
             start: driving_pos,
             end,
             constraints: PathConstraints::Bike,
+            alt_starts: Vec::new(),
+            alt_ends: Vec::new(),
         };
         let maybe_router = if req.start.lane() == req.end.lane() {
             // TODO Convert to a walking trip! Ideally, do this earlier and convert the trip to
@@ -961,6 +975,8 @@ impl TripManager {
             start: start.sidewalk_pos,
             end: walk_to.sidewalk_pos,
             constraints: PathConstraints::Pedestrian,
+            alt_starts: Vec::new(),
+            alt_ends: Vec::new(),
         };
         match ctx.map.pathfind(req) {
             Ok(path) => {

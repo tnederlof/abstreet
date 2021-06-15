@@ -28,7 +28,8 @@ pub enum PathStepV2 {
 pub struct PathV2 {
     steps: Vec<PathStepV2>,
     // TODO There will be a PathRequestV2, but I'm not sure how it'll change yet.
-    req: PathRequest,
+    // TODO Shouldn't be public and mutable, but is for alt_starts/ends now
+    pub(crate) req: PathRequest,
     cost: Duration,
     // TODO Temporarily we'll keep plumbing these along for path_v2_to_v1 to work, but we'll
     // probably just discover uber-turns lazily at the simulation layer instead.

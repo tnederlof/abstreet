@@ -75,12 +75,16 @@ impl BusRoute {
             start: Position::start(self.start),
             end: map.get_bs(self.stops[0]).driving_pos,
             constraints: self.route_type,
+            alt_starts: Vec::new(),
+            alt_ends: Vec::new(),
         }];
         for pair in self.stops.windows(2) {
             steps.push(PathRequest {
                 start: map.get_bs(pair[0]).driving_pos,
                 end: map.get_bs(pair[1]).driving_pos,
                 constraints: self.route_type,
+                alt_starts: Vec::new(),
+                alt_ends: Vec::new(),
             });
         }
         if let Some(end) = self.end_border {
@@ -88,6 +92,8 @@ impl BusRoute {
                 start: map.get_bs(*self.stops.last().unwrap()).driving_pos,
                 end: Position::end(end, map),
                 constraints: self.route_type,
+                alt_starts: Vec::new(),
+                alt_ends: Vec::new(),
             });
         }
         steps

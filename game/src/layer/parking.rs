@@ -374,6 +374,8 @@ impl Efficiency {
                     start,
                     end,
                     constraints: PathConstraints::Pedestrian,
+                    alt_starts: Vec::new(),
+                    alt_ends: Vec::new(),
                 })
                 .collect();
             timer.stop("gather requests");

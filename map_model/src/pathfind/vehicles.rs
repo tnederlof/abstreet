@@ -98,13 +98,22 @@ impl VehiclePathfinder {
             .path_calc
             .get_or(|| RefCell::new(fast_paths::create_calculator(&self.graph)))
             .borrow_mut();
-        let raw_path = calc.calc_path(
+        let raw_path = calc.calc_multi_paths(
             &self.graph,
-            self.nodes.get(Node::Road(
-                map.get_l(req.start.lane()).get_directed_parent(),
-            )),
-            self.nodes
-                .get(Node::Road(map.get_l(req.end.lane()).get_directed_parent())),
+            req.alt_starts
+                .iter()
+                .map(|pos| {
+                    self.nodes
+                        .get(Node::Road(map.get_l(pos.lane()).get_directed_parent()))
+                })
+                .collect(),
+            req.alt_ends
+                .iter()
+                .map(|pos| {
+                    self.nodes
+                        .get(Node::Road(map.get_l(pos.lane()).get_directed_parent()))
+                })
+                .collect(),
         )?;
         let mut road_steps = Vec::new();
         let mut uber_turns = Vec::new();

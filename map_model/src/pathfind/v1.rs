@@ -418,6 +418,10 @@ pub struct PathRequest {
     pub start: Position,
     pub end: Position,
     pub constraints: PathConstraints,
+
+    // TODO Model this better
+    pub alt_starts: Vec<Position>,
+    pub alt_ends: Vec<Position>,
 }
 
 impl fmt::Display for PathRequest {
@@ -462,6 +466,8 @@ impl PathRequest {
             start,
             end,
             constraints,
+            alt_starts: Vec::new(),
+            alt_ends: Vec::new(),
         })
     }
 }

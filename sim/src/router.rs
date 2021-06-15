@@ -78,6 +78,8 @@ impl Router {
                     start,
                     end: Position::end(lane.id, map),
                     constraints: PathConstraints::Bus,
+                    alt_starts: Vec::new(),
+                    alt_ends: Vec::new(),
                 },
                 map,
             ),
@@ -267,6 +269,8 @@ impl Router {
                                     start: Position::new(current_lane, front),
                                     end: new_pos,
                                     constraints: PathConstraints::Car,
+                                    alt_starts: Vec::new(),
+                                    alt_ends: Vec::new(),
                                 }),
                                 TripPhaseType::Parking,
                             ));
@@ -293,6 +297,8 @@ impl Router {
                                         start: Position::new(current_lane, front),
                                         end: new_pos,
                                         constraints: PathConstraints::Car,
+                                        alt_starts: Vec::new(),
+                                        alt_ends: Vec::new(),
                                     }),
                                     TripPhaseType::Parking,
                                 ));

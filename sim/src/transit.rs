@@ -106,6 +106,8 @@ impl TransitSimState {
                     start: stop1.driving_pos,
                     end: map.get_bs(bus_route.stops[idx + 1]).driving_pos,
                     constraints: bus_route.route_type,
+                    alt_starts: Vec::new(),
+                    alt_ends: Vec::new(),
                 };
                 match map.pathfind(req) {
                     Ok(path) => {
@@ -127,6 +129,8 @@ impl TransitSimState {
                 start: Position::start(bus_route.start),
                 end: map.get_bs(bus_route.stops[0]).driving_pos,
                 constraints: bus_route.route_type,
+                alt_starts: Vec::new(),
+                alt_ends: Vec::new(),
             };
             let start = map.pathfind(start_req).expect("no route to first stop");
             let end_at_border = if let Some(l) = bus_route.end_border {
@@ -134,6 +138,8 @@ impl TransitSimState {
                     start: map.get_bs(*bus_route.stops.last().unwrap()).driving_pos,
                     end: Position::end(l, map),
                     constraints: bus_route.route_type,
+                    alt_starts: Vec::new(),
+                    alt_ends: Vec::new(),
                 };
                 let path = map
                     .pathfind(req)
@@ -235,6 +241,8 @@ impl TransitSimState {
                                         .end
                                 },
                                 constraints: bus.car.vehicle_type.to_constraints(),
+                                alt_starts: Vec::new(),
+                                alt_ends: Vec::new(),
                             }),
                             TripPhaseType::RidingBus(route, stop1, bus.car),
                         ));
@@ -333,6 +341,8 @@ impl TransitSimState {
                                     route.end_at_border.as_ref().unwrap().get_req().end
                                 },
                                 constraints: bus.vehicle_type.to_constraints(),
+                                alt_starts: Vec::new(),
+                                alt_ends: Vec::new(),
                             }),
                             TripPhaseType::RidingBus(route_id, stop1, *bus),
                         ));

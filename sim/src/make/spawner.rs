@@ -308,13 +308,15 @@ impl TripEndpoint {
     /// the entire time -- no walking to a car before driving, for instance. The result probably
     /// won't be exactly what would happen on a real trip between the endpoints because of this
     /// assumption.
+    ///
+    /// This is one of the few places supporting left/right turns into and out of driveways!
     pub fn path_req(
         from: TripEndpoint,
         to: TripEndpoint,
         mode: TripMode,
         map: &Map,
     ) -> Option<PathRequest> {
-        Some(PathRequest {
+        let mut req = PathRequest {
             start: from.pos(mode, true, map)?,
             end: to.pos(mode, false, map)?,
             constraints: match mode {
@@ -322,7 +324,33 @@ impl TripEndpoint {
                 TripMode::Drive => PathConstraints::Car,
                 TripMode::Bike => PathConstraints::Bike,
             },
-        })
+            alt_starts: Vec::new(),
+            alt_ends: Vec::new(),
+        };
+
+        // TODO Hack. It's so convoluted to construct this...
+        if mode == TripMode::Drive {
+            if let TripEndpoint::Bldg(b) = from {
+                if let Some((pos, _)) = map.get_b(b).driving_connection_offside(map) {
+                    req.alt_starts.push(pos);
+                    println!(
+                        "for {:?} -> {:?}:   alt start at {}. main {}",
+                        from, to, pos, req.start
+                    );
+                }
+            }
+            if let TripEndpoint::Bldg(b) = to {
+                if let Some((pos, _)) = map.get_b(b).driving_connection_offside(map) {
+                    req.alt_ends.push(pos);
+                    println!(
+                        "for {:?} -> {:?}:   alt end at {}. main {}",
+                        from, to, pos, req.end
+                    );
+                }
+            }
+        }
+
+        Some(req)
     }
 
     fn start_sidewalk_spot(&self, map: &Map) -> Result<SidewalkSpot> {

@@ -310,6 +310,8 @@ impl Sim {
             start,
             end,
             constraints: PathConstraints::Pedestrian,
+            alt_starts: Vec::new(),
+            alt_ends: Vec::new(),
         })
         .ok()
     }

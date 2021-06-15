@@ -15,8 +15,8 @@ use crate::{
     osm, Area, AreaID, AreaType, Building, BuildingID, BuildingType, BusRoute, BusRouteID, BusStop,
     BusStopID, ControlStopSign, ControlTrafficSignal, DirectedRoadID, Intersection, IntersectionID,
     Lane, LaneID, LaneType, Map, MapEdits, MovementID, OffstreetParking, ParkingLot, ParkingLotID,
-    Path, PathConstraints, PathRequest, Pathfinder, Position, Road, RoadID, RoutingParams, Turn,
-    TurnID, TurnType, Zone,
+    Path, PathConstraints, PathRequest, PathStepV2, Pathfinder, Position, Road, RoadID,
+    RoutingParams, Turn, TurnID, TurnType, Zone,
 };
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -572,12 +572,39 @@ impl Map {
         &self.boundary_polygon
     }
 
-    pub fn pathfind(&self, req: PathRequest) -> Result<Path> {
+    pub fn pathfind(&self, mut req: PathRequest) -> Result<Path> {
         assert!(!self.pathfinder_dirty);
-        let path = self
+        req.alt_starts.push(req.start);
+        req.alt_ends.push(req.end);
+        let mut path = self
             .pathfinder
             .pathfind(req.clone(), self)
             .ok_or_else(|| anyhow!("can't fulfill {}", req))?;
+
+        // Assuming each start and end maps to a single DirectedRoadID, we can figure out exactly
+        // which start/end was used just by looking at the path.
+        if let PathStepV2::Along(dr) = path.get_steps()[0] {
+            path.req.start = path
+                .req
+                .alt_starts
+                .iter()
+                .find(|pos| self.get_l(pos.lane()).get_directed_parent() == dr)
+                .cloned()
+                .unwrap();
+        } else {
+            unreachable!()
+        }
+        if let PathStepV2::Along(dr) = path.get_steps().last().cloned().unwrap() {
+            path.req.end = path
+                .req
+                .alt_ends
+                .iter()
+                .find(|pos| self.get_l(pos.lane()).get_directed_parent() == dr)
+                .cloned()
+                .unwrap();
+        } else {
+            unreachable!()
+        }
         path.into_v1(self)
     }
     pub fn pathfind_avoiding_roads(

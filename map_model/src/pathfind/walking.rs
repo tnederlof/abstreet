@@ -317,6 +317,8 @@ fn transit_input_graph(
                 start: stop1.driving_pos,
                 end: stop2.driving_pos,
                 constraints: route.route_type,
+                alt_starts: Vec::new(),
+                alt_ends: Vec::new(),
             };
             let maybe_driving_cost = match route.route_type {
                 PathConstraints::Bus => bus_graph.pathfind(req, map).map(|p| p.get_cost()),
@@ -346,6 +348,8 @@ fn transit_input_graph(
                 start: stop1.driving_pos,
                 end: Position::end(l, map),
                 constraints: route.route_type,
+                alt_starts: Vec::new(),
+                alt_ends: Vec::new(),
             };
             let maybe_driving_cost = match route.route_type {
                 PathConstraints::Bus => bus_graph.pathfind(req, map).map(|p| p.get_cost()),

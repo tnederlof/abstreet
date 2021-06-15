@@ -163,6 +163,22 @@ impl Building {
         Some((pos, self.driveway_geom.clone().must_push(pos.pt(map))))
     }
 
+    pub fn driving_connection_offside(&self, map: &Map) -> Option<(Position, PolyLine)> {
+        let offside_dir = map.get_l(self.sidewalk()).dir.opposite();
+
+        let lane = map.get_parent(self.sidewalk()).find_closest_lane(
+            self.sidewalk(),
+            |l| l.dir == offside_dir && PathConstraints::Car.can_use(l, map),
+            map,
+        )?;
+        // TODO Do we need to insist on this buffer, now that we can make cars gradually appear?
+        let pos = self
+            .sidewalk_pos
+            .equiv_pos(lane, map)
+            .buffer_dist(Distance::meters(7.0), map)?;
+        Some((pos, self.driveway_geom.clone().must_push(pos.pt(map))))
+    }
+
     /// Returns (biking position, sidewalk position). Could fail if the biking graph is
     /// disconnected.
     pub fn biking_connection(&self, map: &Map) -> Option<(Position, Position)> {
