@@ -7,7 +7,7 @@ use geom::LonLat;
 use map_model::raw::{RawBusRoute, RawBusShape, RawBusStop, RawBusStopTime, RawBusTrip, RawMap};
 
 pub fn import_gtfs(map: &mut RawMap, paths: &Vec<String>) -> Result<Vec<RawBusRoute>> {
-    let all_raw_bus_routes: Vec<RawBusRoute> = Vec::new();
+    let mut all_raw_bus_routes: Vec<RawBusRoute> = Vec::new();
     // parse raw gtfs text files into record
     for path in paths {
         // parse routes
@@ -101,7 +101,8 @@ pub fn import_gtfs(map: &mut RawMap, paths: &Vec<String>) -> Result<Vec<RawBusRo
                     all_stops.push(stop);
                 }
             }
-            let all_stops_distinct: Vec<StopRecord> = all_stops.sort_by_key(|s| s.stop_id);
+            // TODO need to dedupe this vector to only include unique stops
+            let all_stops_distinct: Vec<StopRecord> = all_stops;
 
             // create the raw data
             raw_bus_routes.push(RawBusRoute {
@@ -144,7 +145,7 @@ pub fn import_gtfs(map: &mut RawMap, paths: &Vec<String>) -> Result<Vec<RawBusRo
                                 stop: stop_records
                                     .iter()
                                     .filter(|s| s.stop_id == st.stop_id)
-                                    .flat_map(|s| RawBusStop {
+                                    .map(|s| RawBusStop {
                                         id: s.stop_id,
                                         code: s.stop_code,
                                         name: s.stop_name,
@@ -152,7 +153,8 @@ pub fn import_gtfs(map: &mut RawMap, paths: &Vec<String>) -> Result<Vec<RawBusRo
                                         position: LonLat::new(s.stop_lon, s.stop_lat)
                                             .to_pt(&map.gps_bounds),
                                     })
-                                    .collect(),
+                                    .next()
+                                    .unwrap(),
                                 stop_sequence: st.stop_sequence,
                                 pickup_type: st.pickup_type,
                                 drop_off_type: st.drop_off_type,
