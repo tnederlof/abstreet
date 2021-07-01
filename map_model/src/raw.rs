@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 
 use abstio::{CityName, MapName};
 use abstutil::{deserialize_btreemap, serialize_btreemap, Tags};
-use geom::{Distance, GPSBounds, PolyLine, Polygon, Pt2D};
+use geom::{Distance, GPSBounds, LonLat, PolyLine, Polygon, Pt2D};
 
 use crate::make::initial::lane_specs::get_lane_specs_ltr;
 use crate::{osm, Amenity, AreaType, Direction, DrivingSide, IntersectionType, MapConfig};
@@ -610,26 +610,45 @@ impl RestrictionType {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RawBusRoute {
-    pub full_name: String,
+    pub id: String,
+    pub long_name: String,
     pub short_name: String,
-    pub osm_rel_id: osm::RelationID,
-    pub gtfs_trip_marker: Option<String>,
-    /// If not, light rail
-    pub is_bus: bool,
+    pub description: String,
     pub stops: Vec<RawBusStop>,
-    pub border_start: Option<osm::NodeID>,
-    pub border_end: Option<osm::NodeID>,
-    /// This is guaranteed to be in order and contiguous.
-    pub all_pts: Vec<(osm::NodeID, Pt2D)>,
+    pub trips: Vec<RawBusTrip>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RawBusTrip {
+    pub service_id: String,
+    pub id: String,
+    pub trip_headsign: String,
+    pub direction_id: usize,
+    pub shapes: Vec<RawBusShape>,
+    pub stop_times: Vec<RawBusStopTime>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RawBusStop {
+    pub id: String,
+    pub code: String,
     pub name: String,
-    /// Probably not an intersection, but this type is more convenient.
-    pub vehicle_pos: (osm::NodeID, Pt2D),
-    /// Guaranteed to be filled out when RawMap is fully written.
-    pub matched_road: Option<(OriginalRoad, Direction)>,
-    /// If it's not explicitly mapped, we'll do equiv_pos.
-    pub ped_pos: Option<Pt2D>,
+    pub description: String,
+    pub position: Pt2D,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RawBusStopTime {
+    pub arrival_time: String,
+    pub departure_time: String,
+    pub stop: RawBusStop,
+    pub stop_sequence: usize,
+    pub pickup_type: usize,
+    pub drop_off_type: usize,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RawBusShape {
+    pub position: Pt2D,
+    pub sequence: usize,
 }

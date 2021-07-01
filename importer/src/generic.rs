@@ -20,6 +20,13 @@ pub struct GenericCityImporter {
     /// and instead that file will be used. This is kind of a hack, because it'll assume the cities
     /// are imported in the proper order, but it prevents having to download duplicate large files.
     pub osm_url: String,
+    /// A vector URLs containing GTFS feeds for the entire city.
+    /// Feeds can be searched by browsing https://www.transit.land/feeds and copying the
+    /// "Current Static GTFS" URL.
+    ///
+    /// Note some cities have multiple transit authorities in which case you should specify
+    /// multiple feed urls here.
+    pub gtfs_feed_urls: Vec<String>,
 
     pub map_config: map_model::MapConfig,
     pub onstreet_parking: convert_osm::OnstreetParking,
@@ -65,7 +72,17 @@ impl GenericCityImporter {
             config,
         );
 
-        // TODO Download from the GTFS url, stick it in name.city.input_path("gtfs")
+        let local_gtfs_files = if self.gtfs_feed_urls.iter().all(|f| f.starts_with("http")) {
+            let mut files = Vec::new();
+            for (i, url) in self.gtfs_feed_urls.iter().enumerate() {
+                let file = name.city.input_path(format!("gtfs/{}/", i));
+                download(config, file.clone(), url).await;
+                files.push(file)
+            }
+            Some(files)
+        } else {
+            None
+        };
 
         let map = convert_osm::convert(
             convert_osm::Options {
@@ -82,7 +99,7 @@ impl GenericCityImporter {
                 private_offstreet_parking: self.private_offstreet_parking.clone(),
                 include_railroads: self.include_railroads,
                 extra_buildings: self.extra_buildings.clone(),
-                gtfs: self.gtfs.clone(),
+                gtfs: local_gtfs_files,
             },
             timer,
         );

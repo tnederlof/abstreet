@@ -327,10 +327,6 @@ impl Map {
         traffic_signals::synchronize(&mut map);
 
         // Note this will always use the slower Pathfinder::Dijkstra.
-        transit::make_stops_and_routes(&mut map, &raw.bus_routes, timer);
-        for id in map.bus_stops.keys() {
-            assert!(!map.get_routes_serving_stop(*id).is_empty());
-        }
 
         if opts.build_ch {
             timer.start("setup ContractionHierarchyPathfinder");

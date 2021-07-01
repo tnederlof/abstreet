@@ -37,8 +37,8 @@ pub struct Options {
     pub include_railroads: bool,
     /// If provided, read polygons from this GeoJSON file and add them to the RawMap as buildings.
     pub extra_buildings: Option<String>,
-    /// The path to an unzipped GTFS directory for public transit routes
-    pub gtfs: Option<String>,
+    /// Paths to unzipped GTFS directories for public transit routes
+    pub gtfs: Option<Vec<String>>,
 }
 
 /// What roads will have on-street parking lanes? Data from
@@ -109,8 +109,8 @@ pub fn convert(opts: Options, timer: &mut abstutil::Timer) -> RawMap {
 
     snappy::snap_cycleways(&map, timer);
 
-    if let Some(ref path) = opts.gtfs {
-        transit::import_gtfs(&mut map, path).unwrap();
+    if let Some(ref paths) = opts.gtfs {
+        map.bus_routes = transit::import_gtfs(&mut map, paths).unwrap();
     }
 
     map.config = opts.map_config;

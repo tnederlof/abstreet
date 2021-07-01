@@ -355,11 +355,7 @@ pub fn extract_osm(map: &mut RawMap, opts: &Options, timer: &mut Timer) -> OsmEx
     // relations, so do this after reading all of them.
     for (vehicle_pos, ped_pos) in stop_areas {
         for route in &mut map.bus_routes {
-            for stop in &mut route.stops {
-                if stop.vehicle_pos == vehicle_pos {
-                    stop.ped_pos = Some(ped_pos);
-                }
-            }
+            for stop in &mut route.stops {}
         }
     }
 
